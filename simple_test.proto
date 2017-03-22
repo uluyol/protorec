@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package protorec;
+
+message TestMsg {
+	string f1 = 1;
+	int32 f2 = 10;
+	bytes f4 = 99;
+	fixed64 f3 = 14;
+	double f5 = 108;
+}
