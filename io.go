@@ -1,11 +1,10 @@
 package protorec
 
 import (
-	"encoding/binary"
-	"fmt"
 	"io"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/uluyol/binrec"
 )
 
 // This file contains helper io functions compatible with
@@ -17,16 +16,10 @@ import (
 func WriteDelimitedTo(w io.Writer, m proto.Message) error {
 	data, err := proto.Marshal(m)
 
-	var buf [binary.MaxVarintLen64]byte
-
-	n := binary.PutUvarint(buf[:], uint64(len(data)))
-
-	concat := make([]byte, len(data)+n)
-	copy(concat, buf[:n])
-	copy(concat[n:], data)
-
-	_, err = w.Write(concat)
-	return err
+	if err != nil {
+		return err
+	}
+	return binrec.WriteDelimitedTo(w, data)
 }
 
 type Reader interface {
@@ -39,15 +32,7 @@ type Reader interface {
 //
 // ReadDelimitedFrom is analogous to mergeDelimitedFrom in protobuf-java.
 func ReadDelimitedFrom(r Reader, m proto.Message) error {
-	dlen, err := binary.ReadUvarint(r)
-	if err != nil {
-		if err == io.EOF || err == io.ErrUnexpectedEOF {
-			return err
-		}
-		return fmt.Errorf("unable to read length: %v", err)
-	}
-	buf := make([]byte, dlen)
-	_, err = io.ReadFull(r, buf)
+	buf, err := binrec.ReadDelimitedFrom(r)
 	if err != nil {
 		return err
 	}
